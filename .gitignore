@@ -1,0 +1,8 @@
+.cache/
+.config/
+auth/
+database/
+logs/
+.env
+
+.DS_Store
