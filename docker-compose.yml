@@ -33,6 +33,7 @@ x-rasax-credentials: &rasax-credentials
   JWT_SECRET: ${JWT_SECRET}
   RASA_USER_APP: "http://app:5055"
   RASA_PRODUCTION_HOST: "http://rasa-production:5005"
+  RASA_WORKER_HOST: "http://rasa-worker:5005"
   RASA_TOKEN: ${RASA_TOKEN}
 
 x-rasa-credentials: &rasa-credentials
@@ -44,11 +45,11 @@ x-rasa-credentials: &rasa-credentials
 
 x-rasa-services: &default-rasa-service
   restart: always
-  image: rasa/rasa:2.8.11-full
+  image: rasa/rasa:${RASA_VERSION}
   volumes:
     - ./.config:/.config
   expose:
-    - 5005
+    - "5005"
   command: >
     x
     --no-prompt
@@ -68,9 +69,9 @@ x-rasa-environments: &default-rasa-environments
 services:
   rasa-x:
     <<: *default-rasa-environments
-    image: rasa/rasa-x:0.42.6
+    image: rasa/rasa-x:${RASA_X_VERSION}
     expose:
-      - 5002
+      - "5002"
     volumes:
       - ./models:/app/models
       - ./environments.yml:/app/environments.yml
@@ -88,6 +89,27 @@ services:
       RASA_X_USER_ANALYTICS: "0"
       SANIC_RESPONSE_TIMEOUT: "3600"
       RUN_DATABASE_MIGRATION_AS_SEPARATE_SERVICE: "true"
+    depends_on:
+      - db
+
+  db-migration:
+    <<: *default-rasa-environments
+    image: rasa/rasa-x:${RASA_X_VERSION}
+    entrypoint: ["python"]
+    command: ["-m", "rasax.community.services.db_migration_service"]
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || kill 1"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
+      start_period: 2s
+    expose:
+      - "8000"
+    environment:
+      <<: [*database-credentials]
+      RUN_DATABASE_MIGRATION_AS_SEPARATE_SERVICE: "true"
+      MPLCONFIGDIR: "/tmp/.matplotlib"
     depends_on:
       - db
 
@@ -113,45 +135,27 @@ services:
     <<: *default-rasa-environments
     build:
       context: .
+      args:
+        RASA_SDK_VERSION: "${RASA_SDK_VERSION}"
     restart: always
     expose:
-      - 5055
+      - "5055"
     depends_on:
       - rasa-production
-
-  db-migration:
-    <<: *default-rasa-environments
-    image: rasa/rasa-x:0.42.6
-    entrypoint: ["python"]
-    command: ["-m", "rasax.community.services.db_migration_service"]
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || kill 1"]
-      interval: 5s
-      timeout: 1s
-      retries: 3
-      start_period: 2s
-    expose:
-      - 8000
-    environment:
-      <<: [*database-credentials]
-      RUN_DATABASE_MIGRATION_AS_SEPARATE_SERVICE: "true"
-      MPLCONFIGDIR: "/tmp/.matplotlib"
-    depends_on:
-      - db
 
   db:
     <<: *default-rasa-environments
     image: bitnami/postgresql:11.11.0
     expose:
-      - 5432
+      - "5432"
     environment:
       POSTGRESQL_USERNAME: "${DB_USER:-admin}"
       POSTGRESQL_PASSWORD: "${DB_PASSWORD}"
       POSTGRESQL_DATABASE: "${DB_DATABASE:-rasa}"
     volumes:
       - ./database:/bitnami/postgresql
-
+    restart: always
+    
   redis:
     <<: *default-rasa-environments
     restart: always
@@ -159,7 +163,7 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     expose:
-      - 6379
+      - "6379"
   
   rabbit:
     <<: *default-rasa-environments
@@ -171,7 +175,7 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_DISK_FREE_RELATIVE_LIMIT: "0.1"
     expose:
-      - 5672
+      - "5672"
 
   duckling:
     <<: *default-rasa-environments
