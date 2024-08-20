@@ -1,0 +1,6 @@
+version: "2.0"
+rules:
+- rule: Hello Rule
+  steps:
+  - intent: hello
+  - action: utter_greet
