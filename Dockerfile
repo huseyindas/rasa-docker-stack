@@ -5,7 +5,8 @@ WORKDIR /app
 
 USER root
 
-RUN pip install redis aiohttp
+COPY ./actions/requirements.txt .
+RUN pip install -r requirements.txt
 
 COPY ./actions /app/actions
 

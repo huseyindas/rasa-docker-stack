@@ -3,6 +3,9 @@
 auth/
 database/
 logs/
+ollama/
+vector_database/
+
 .env
 
 .DS_Store
