@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+requests
+phidata
+bs4
+sqlalchemy
+pgvector
+psycopg[binary]
+pypdf
+ollama
+httpx

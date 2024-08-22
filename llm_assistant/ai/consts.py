@@ -1,0 +1,8 @@
+import os
+
+VECTOR_DB = os.getenv("VECTOR_DB")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
+EMBEDDING = int(os.getenv("EMBEDDING", 4096))
+KNOWLEDGE_BASE_WEBSITES = os.getenv("KNOWLEDGE_BASE_WEBSITES", "")
+KNOWLEDGE_BASE_PDF_URLS = os.getenv("EMBEDDING", "4096")
