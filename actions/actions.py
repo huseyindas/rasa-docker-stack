@@ -19,7 +19,6 @@ class ActionLLM(Action):
     ) -> List[Dict[Text, Any]]:
         try:
             assistant = Assistant(tracker=tracker)
-            _ = assistant.get_or_create_assistant()
 
             response = await assistant.chat(
                 message=tracker.latest_message.get("text")
